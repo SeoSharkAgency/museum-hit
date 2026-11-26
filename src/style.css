@@ -57,12 +57,14 @@ body.dragging { cursor: grabbing; }
   height: 0;
   transform-style: preserve-3d;
   -webkit-transform-style: preserve-3d;
-  will-change: transform;
 }
 
 .room, .wall, .floor, .ceiling, .runner, .plane, .box, .face,
 .work, .plaque, .hero-type, .bulb, .track, .blob, .skylight, .spot-beam, .spot-pool, .spot-wash, .cup-mark {
   position: absolute;
+}
+
+.room, .box, .wall {
   transform-style: preserve-3d;
   -webkit-transform-style: preserve-3d;
 }
@@ -76,8 +78,8 @@ body.dragging { cursor: grabbing; }
 }
 
 .wall {
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
 }
 
 .wall.plaster {
@@ -564,10 +566,9 @@ body.dragging { cursor: grabbing; }
   left: 22px;
   padding: 10px 16px 12px;
   color: var(--cream);
-  background: rgba(8, 29, 69, 0.72);
+  background: #081d45;
   border: 1px solid rgba(230, 184, 76, 0.35);
   border-radius: 20px;
-  backdrop-filter: blur(10px);
   box-shadow: 0 12px 30px rgba(4, 12, 32, 0.28);
 }
 
@@ -594,11 +595,11 @@ body.dragging { cursor: grabbing; }
   right: 20px;
   width: 138px;
   padding: 10px 10px 12px;
-  background: var(--paper);
+  background: #f3f0e7;
   border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 20px;
   box-shadow: 0 16px 40px rgba(4, 12, 32, 0.28);
-  backdrop-filter: blur(10px);
+  isolation: isolate;
 }
 
 #map p {

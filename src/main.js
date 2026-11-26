@@ -142,14 +142,20 @@ function addJamb(wall, side) {
 
 function addDoor(parent, room) {
   const z = room.z1;
-  const left = addSpan(parent, room, { x0: X0, x1: -DOOR, z, y0: CEIL, y1: FLOOR, ry: 180 });
-  const right = addSpan(parent, room, { x0: DOOR, x1: X1, z, y0: CEIL, y1: FLOOR, ry: 180 });
-  const lintel = addSpan(parent, room, { x0: -DOOR, x1: DOOR, z, y0: CEIL, y1: -210, ry: 180 });
-  if (left) addJamb(left, "right");
-  if (right) addJamb(right, "left");
-  if (lintel && room.mark) {
-    const mark = make("div", "numeral", lintel);
-    mark.textContent = room.mark;
+  const panels = [
+    { x0: X0, x1: -DOOR, y0: CEIL, y1: FLOOR },
+    { x0: DOOR, x1: X1, y0: CEIL, y1: FLOOR },
+    { x0: -DOOR, x1: DOOR, y0: CEIL, y1: -210 },
+  ];
+  for (const panel of panels) {
+    const near = addSpan(parent, room, { ...panel, z: z - 8, ry: 180 });
+    addSpan(parent, room, { ...panel, z: z + 8, ry: 0 });
+    if (panel.x1 === -DOOR && near) addJamb(near, "right");
+    if (panel.x0 === DOOR && near) addJamb(near, "left");
+    if (panel.y1 === -210 && near && room.mark) {
+      const mark = make("div", "numeral", near);
+      mark.textContent = room.mark;
+    }
   }
 }
 
@@ -427,24 +433,25 @@ function addLights(parent, room) {
   }
 }
 
-function buildRoom(room) {
+function buildRoom(room, index) {
   const group = make("div", `room tone-${room.id}`, world);
   const depth = room.z1 - room.z0;
   const midZ = (room.z0 + room.z1) / 2;
+  const lift = index % 2 === 0 ? 0 : 3;
   addPlane(group, `floor ${room.floor}`, {
     x: 0,
-    y: FLOOR,
+    y: FLOOR + lift,
     z: midZ,
     w: X1 - X0,
-    h: depth,
+    h: depth + 28,
     rx: FLOOR_RX,
   });
   addPlane(group, "ceiling", {
     x: 0,
-    y: CEIL,
+    y: CEIL - lift,
     z: midZ,
     w: X1 - X0,
-    h: depth,
+    h: depth + 28,
     rx: FLOOR_RX,
   });
   if (room.z0 === 0) {
@@ -642,12 +649,12 @@ function retreat() {
 
 function syncRoom(force = false) {
   const room = rooms.find((item) => cam.z >= item.z0 && cam.z < item.z1) || rooms.at(-1);
+  if (room.id === roomId && !force) return;
+  roomId = room.id;
   document.querySelectorAll(".m-room").forEach((btn) => {
     if (btn.dataset.room === room.id) btn.setAttribute("aria-current", "true");
     else btn.removeAttribute("aria-current");
   });
-  if (room.id === roomId && !force) return;
-  roomId = room.id;
   roomLabel.querySelector("small").textContent = room.kicker;
   roomLabel.querySelector("strong").textContent = room.name;
   if (!force) {
@@ -655,20 +662,22 @@ function syncRoom(force = false) {
   }
 }
 
+let shownPose = "";
 function render() {
-  const y = EYE;
-  const pitch = cam.pitch;
   const snap = (value) => Math.round(value * 10) / 10;
-  world.style.transform = `translateZ(${fov}px) rotateX(${snap(-pitch)}deg) rotateY(${snap(180 - cam.yaw)}deg) translate3d(${snap(-cam.x)}px, ${snap(-y)}px, ${snap(-cam.z)}px)`;
-
-  const you = $("#m-you");
-  if (you) {
-    const zMax = rooms.at(-1).z1;
-    const u = (cam.x - X0) / (X1 - X0);
-    const v = 1 - cam.z / zMax;
-    you.style.left = `${u * 100}%`;
-    you.style.top = `${v * 100}%`;
-    you.style.transform = `translate(-50%, -50%) rotate(${cam.yaw}deg)`;
+  const pose = `${snap(cam.x)}|${snap(cam.z)}|${snap(cam.yaw)}|${snap(cam.pitch)}`;
+  if (pose !== shownPose) {
+    shownPose = pose;
+    world.style.transform = `translateZ(${fov}px) rotateX(${snap(-cam.pitch)}deg) rotateY(${snap(180 - cam.yaw)}deg) translate3d(${snap(-cam.x)}px, ${-EYE}px, ${snap(-cam.z)}px)`;
+    const you = $("#m-you");
+    if (you) {
+      const zMax = rooms.at(-1).z1;
+      const u = (cam.x - X0) / (X1 - X0);
+      const v = 1 - cam.z / zMax;
+      you.style.left = `${u * 100}%`;
+      you.style.top = `${v * 100}%`;
+      you.style.transform = `translate(-50%, -50%) rotate(${snap(cam.yaw)}deg)`;
+    }
   }
   syncRoom();
 }
