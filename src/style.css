@@ -57,6 +57,7 @@ body.dragging { cursor: grabbing; }
   height: 0;
   transform-style: preserve-3d;
   -webkit-transform-style: preserve-3d;
+  will-change: transform;
 }
 
 .room, .wall, .floor, .ceiling, .runner, .plane, .box, .face,
@@ -259,13 +260,12 @@ body.dragging { cursor: grabbing; }
   margin: 0;
   min-width: 0;
   cursor: pointer;
-  transform: translateZ(18px) translate(-50%, -50%);
-  transition: transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transform: translateZ(32px) translate(-50%, -50%);
 }
 
 .work:hover,
 .work:focus-visible {
-  transform: translateZ(34px) translate(-50%, -50%);
+  transform: translateZ(48px) translate(-50%, -50%);
 }
 
 .work:focus-visible .frame {
@@ -296,7 +296,7 @@ body.dragging { cursor: grabbing; }
   position: relative;
 }
 
-.canvas svg, .canvas img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 32%; }
+.canvas svg, .canvas img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 32%; transform: translateZ(2px); backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .canvas.portrait { background: #0d3f86; }
 .canvas.portrait img { object-position: center 12%; }
 

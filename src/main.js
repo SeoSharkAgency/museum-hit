@@ -50,10 +50,6 @@ let returnPose = null;
 let viewing = null;
 let roomId = "vest";
 let fov = 980;
-let bobPhase = 0;
-let bobAmp = 0;
-let prevX = cam.x;
-let prevZ = cam.z;
 let wheel = 0;
 const down = new Set();
 const obstacles = [];
@@ -660,18 +656,10 @@ function syncRoom(force = false) {
 }
 
 function render() {
-  const stride = Math.hypot(cam.x - prevX, cam.z - prevZ);
-  if (!calm && stride > 0.4) {
-    bobPhase += stride * 0.05;
-    bobAmp = Math.min(6.5, bobAmp + 0.8);
-  } else {
-    bobAmp *= 0.86;
-  }
-  prevX = cam.x;
-  prevZ = cam.z;
-  const y = EYE + Math.sin(bobPhase) * bobAmp;
-  const pitch = cam.pitch + Math.sin(bobPhase * 2) * bobAmp * 0.04;
-  world.style.transform = `translateZ(${fov}px) rotateX(${-pitch}deg) rotateY(${180 - cam.yaw}deg) translate3d(${-cam.x}px, ${-y}px, ${-cam.z}px)`;
+  const y = EYE;
+  const pitch = cam.pitch;
+  const snap = (value) => Math.round(value * 10) / 10;
+  world.style.transform = `translateZ(${fov}px) rotateX(${snap(-pitch)}deg) rotateY(${snap(180 - cam.yaw)}deg) translate3d(${snap(-cam.x)}px, ${snap(-y)}px, ${snap(-cam.z)}px)`;
 
   const you = $("#m-you");
   if (you) {
@@ -801,7 +789,7 @@ function boot() {
 
   addPlane(world, "runner", {
     x: 0,
-    y: FLOOR - 5,
+    y: FLOOR - 16,
     z: 4360,
     w: 16,
     h: 8400,
