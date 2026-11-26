@@ -14,7 +14,10 @@
 * { box-sizing: border-box; }
 
 html, body {
+  position: fixed;
+  inset: 0;
   margin: 0;
+  width: 100%;
   height: 100%;
   height: 100dvh;
   overflow: hidden;
@@ -33,9 +36,9 @@ body.dragging { cursor: grabbing; }
   width: 100%;
   height: 100%;
   height: 100dvh;
-  overflow: hidden;
-  background:
-    radial-gradient(ellipse at 50% 30%, #123f8f 0%, #081d45 62%);
+  overflow: visible;
+  isolation: isolate;
+  background: #081d45;
   cursor: grab;
   touch-action: none;
 }
@@ -90,7 +93,6 @@ body.dragging { cursor: grabbing; }
   background-size: 100% 8px, 100% 22px, 100% 100%;
   background-position: top, bottom, center;
   background-repeat: no-repeat;
-  box-shadow: inset 0 0 80px rgba(4, 12, 32, 0.28);
 }
 
 .wall .ao {
@@ -148,7 +150,6 @@ body.dragging { cursor: grabbing; }
     radial-gradient(circle at 50% 50%, transparent 0 118px, rgba(243, 240, 231, 0.9) 120px 126px, transparent 128px),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 46px, transparent 46px 92px),
     linear-gradient(180deg, #1a4ea8, #0d2c66 55%, #0a214f);
-  box-shadow: inset 0 0 90px rgba(4, 12, 32, 0.28);
 }
 
 .ceiling {
@@ -522,17 +523,7 @@ body.dragging { cursor: grabbing; }
   background: var(--navy);
 }
 
-#grain {
-  z-index: 5;
-  opacity: 0.09;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.55'/></svg>");
-}
-
-#vignette {
-  z-index: 4;
-  background: radial-gradient(ellipse at 50% 46%, transparent 58%, rgba(4, 12, 32, 0.35) 100%);
-}
+#grain, #vignette { display: none; }
 
 .sphere {
   position: absolute;
@@ -559,6 +550,12 @@ body.dragging { cursor: grabbing; }
 #room-label, #map, #hints, #sheet, #intro, .pad {
   position: fixed;
   z-index: 8;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+#room-label, #map, #sheet, .pad {
+  transform: translateZ(0);
 }
 
 #room-label {
@@ -648,11 +645,11 @@ body.dragging { cursor: grabbing; }
 #hints {
   left: 50%;
   bottom: 22px;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateZ(0);
   display: flex;
   gap: 18px;
   padding: 10px 16px;
-  background: var(--paper);
+  background: #f3f0e7;
   color: var(--navy);
   font-size: 12px;
   letter-spacing: 0.04em;
@@ -667,11 +664,10 @@ body.dragging { cursor: grabbing; }
   bottom: 22px;
   width: min(400px, calc(100vw - 44px));
   padding: 22px 22px 18px;
-  background: rgba(243, 240, 231, 0.96);
+  background: #f3f0e7;
   color: var(--ink);
   border-radius: 26px;
   box-shadow: 0 24px 50px rgba(4, 12, 32, 0.32);
-  backdrop-filter: blur(12px);
   visibility: hidden;
 }
 
@@ -722,7 +718,7 @@ body.dragging { cursor: grabbing; }
 #intro {
   left: 50%;
   bottom: 5vh;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateZ(0);
   width: min(520px, calc(100% - 32px));
   padding: 22px 28px 18px;
   text-align: center;
