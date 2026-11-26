@@ -867,6 +867,7 @@ window.addEventListener("pointermove", (event) => {
   targetPitch = gsap.utils.clamp(-16, 18, targetPitch + dy * 0.1);
 });
 
+document.querySelector("#pad").addEventListener("contextmenu", (event) => event.preventDefault());
 document.querySelectorAll("#pad button").forEach((button) => {
   const key = button.dataset.k;
   const press = (event) => {
@@ -874,10 +875,15 @@ document.querySelectorAll("#pad button").forEach((button) => {
     down.add(key);
   };
   const release = () => down.delete(key);
+  button.addEventListener("contextmenu", (event) => event.preventDefault());
+  button.addEventListener("selectstart", (event) => event.preventDefault());
+  button.addEventListener("touchstart", press, { passive: false });
   button.addEventListener("pointerdown", press);
   button.addEventListener("pointerup", release);
   button.addEventListener("pointerleave", release);
   button.addEventListener("pointercancel", release);
+  button.addEventListener("touchend", release);
+  button.addEventListener("touchcancel", release);
 });
 
 boot();
