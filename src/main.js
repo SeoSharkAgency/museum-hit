@@ -79,6 +79,7 @@ function dampAngle(current, target, dt, speed) {
 }
 
 function setFov() {
+  mapSize = null;
   const width = window.visualViewport?.width || window.innerWidth;
   fov = Math.max(640, Math.min(1100, width * 0.7));
   const perspective = `${fov}px`;
@@ -148,12 +149,12 @@ function addDoor(parent, room) {
     { x0: -DOOR, x1: DOOR, y0: CEIL, y1: -210 },
   ];
   for (const panel of panels) {
-    const near = addSpan(parent, room, { ...panel, z: z - 8, ry: 180 });
-    addSpan(parent, room, { ...panel, z: z + 8, ry: 0 });
-    if (panel.x1 === -DOOR && near) addJamb(near, "right");
-    if (panel.x0 === DOOR && near) addJamb(near, "left");
-    if (panel.y1 === -210 && near && room.mark) {
-      const mark = make("div", "numeral", near);
+    const wall = addSpan(parent, room, { ...panel, z, ry: 180 });
+    if (!wall) continue;
+    if (panel.x1 === -DOOR) addJamb(wall, "right");
+    if (panel.x0 === DOOR) addJamb(wall, "left");
+    if (panel.y1 === -210 && room.mark) {
+      const mark = make("div", "numeral", wall);
       mark.textContent = room.mark;
     }
   }
@@ -254,11 +255,9 @@ function hangWork(wall, item, room) {
 
   if (item.kind === "panel") {
     button.innerHTML = `
-      <div class="wash"></div>
       <div class="sconce"></div>
       <div class="frame"><div class="slip">
         <div class="panel-face" style="width:${item.w}px;height:${item.h}px">
-          <div class="tooth"></div>
           <small>${item.panel.kicker}</small>
           <h3>${item.panel.heading}</h3>
           <p>${item.panel.body}</p>
@@ -267,10 +266,9 @@ function hangWork(wall, item, room) {
       ${caption(item)}`;
   } else {
     button.innerHTML = `
-      <div class="wash"></div>
       <div class="sconce"></div>
       <div class="frame"><div class="slip">
-        <div class="canvas${item.fit === "portrait" ? " portrait" : ""}" style="width:${item.w}px;height:${item.h}px">${item.image ? `<img src="${item.image}" alt="${item.title}">` : `${item.svg || ""}${item.fit === "portrait" ? `<span class="slot-mark">Місце для портрета</span>` : ""}<div class="tooth"></div>`}</div>
+        <div class="canvas${item.fit === "portrait" ? " portrait" : ""}" style="width:${item.w}px;height:${item.h}px">${item.image ? `<img src="${item.image}" alt="${item.title}">` : `${item.svg || ""}${item.fit === "portrait" ? `<span class="slot-mark">Місце для портрета</span>` : ""}`}</div>
       </div></div>
       ${room.id === "fame" ? "" : caption(item)}`;
   }
@@ -278,20 +276,12 @@ function hangWork(wall, item, room) {
 }
 
 function addBench(parent, x, z) {
-  const seatY = FLOOR - 46;
-  addBox(parent, { x, y: seatY, z, w: 210, h: 16, d: 54, fill: "#0d2c66" });
-  for (const sx of [-90, 90]) {
-    for (const sz of [-18, 18]) {
-      addBox(parent, { x: x + sx, y: FLOOR - 22, z: z + sz, w: 10, h: 40, d: 10, fill: "#e6b84c" });
-    }
-  }
-  addPlane(parent, "blob", { x, y: FLOOR - 3, z, w: 230, h: 90, rx: FLOOR_RX });
+  addBox(parent, { x, y: FLOOR - 46, z, w: 210, h: 16, d: 54, fill: "#0d2c66" });
   obstacles.push({ x0: x - 120, x1: x + 120, z0: z - 48, z1: z + 48 });
 }
 
 function addPedestal(parent, x, z) {
   addBox(parent, { x, y: FLOOR - 50, z, w: 116, h: 100, d: 116, fill: "#e6e2d6" });
-  addPlane(parent, "blob", { x, y: FLOOR - 3, z, w: 180, h: 120, rx: FLOOR_RX });
   obstacles.push({ x0: x - 70, x1: x + 70, z0: z - 70, z1: z + 70 });
 }
 
@@ -307,43 +297,17 @@ function addGoal(parent, x, z) {
   addBox(rig, { x: 92, y: 10, z: 0, w: 10, h: 150, d: 10, fill: "#f3f0e7" });
   addBox(rig, { x: 0, y: -70, z: 0, w: 194, h: 10, d: 10, fill: "#f3f0e7" });
   const net = addBox(rig, { x: 0, y: 10, z: 28, w: 176, h: 140, d: 4, fill: "#d5e2f7" });
-  net.style.opacity = "0.38";
+  net.querySelectorAll(".face").forEach((face) => {
+    face.style.background = "rgba(213, 226, 247, 0.45)";
+  });
 }
 
 function addWallSpot(parent, x, z) {
   const west = x < 0;
-  const wallX = west ? X0 + 14 : X1 - 14;
-  const lampY = CEIL + 78;
-  const endX = x - Math.sign(x - wallX) * 70;
-  const endY = FLOOR - 112;
-  const dx = endX - wallX;
-  const dy = endY - lampY;
-  const len = Math.hypot(dx, dy);
-  const theta = (-Math.atan2(dx, dy) * 180) / Math.PI;
-  const into = west ? 1 : -1;
-
-  addBox(parent, { x: wallX, y: lampY, z, w: 28, h: 48, d: 64, fill: "#0a214f" });
-  addBox(parent, { x: wallX + into * 10, y: lampY, z, w: 14, h: 30, d: 40, fill: "#101010" });
-  addBox(parent, { x: wallX + into * 18, y: lampY, z, w: 6, h: 16, d: 22, fill: "#fff1c2" });
-  addPlane(parent, "spot-wash", {
-    x: wallX + into * 8,
-    y: lampY + 10,
-    z,
-    w: 150,
-    h: 180,
-    ry: west ? 90 : -90,
-  });
-
-  const beam = make("div", "spot-beam", parent);
-  beam.style.width = "110px";
-  beam.style.height = `${len}px`;
-  beam.style.left = "-55px";
-  beam.style.top = `${-len / 2}px`;
-  beam.style.transform = `translate3d(${(wallX + endX) / 2}px, ${(lampY + endY) / 2}px, ${z}px) rotateZ(${theta}deg)`;
-  beam.setAttribute("aria-hidden", "true");
-
+  const wallX = west ? X0 + 18 : X1 - 18;
   const bulb = make("div", "bulb spot-bulb", parent);
-  bulb.style.transform = `translate3d(${wallX + into * 20}px, ${lampY}px, ${z}px)`;
+  bulb.style.transform = `translate3d(${wallX}px, ${CEIL + 78}px, ${z}px)`;
+  bulb.setAttribute("aria-hidden", "true");
 }
 
 function addTrophyPedestal(parent, item) {
@@ -351,22 +315,6 @@ function addTrophyPedestal(parent, item) {
   addBox(parent, { x, y: FLOOR - 48, z, w: 112, h: 96, d: 112, fill: "#e6e2d6" });
   addBox(parent, { x, y: FLOOR - 100, z, w: 132, h: 10, d: 132, fill: "#f7f4ea" });
   addBox(parent, { x, y: FLOOR - 108, z, w: 140, h: 6, d: 140, fill: "#e6b84c" });
-  addPlane(parent, "cup-mark", {
-    x,
-    y: FLOOR - 112,
-    z,
-    w: 78,
-    h: 78,
-    rx: FLOOR_RX,
-  });
-  addPlane(parent, "spot-pool", {
-    x,
-    y: FLOOR - 114,
-    z,
-    w: 168,
-    h: 168,
-    rx: FLOOR_RX,
-  });
   addWallSpot(parent, x, z);
 
   obstacles.push({ x0: x - 78, x1: x + 78, z0: z - 78, z1: z + 78 });
@@ -433,25 +381,24 @@ function addLights(parent, room) {
   }
 }
 
-function buildRoom(room, index) {
+function buildRoom(room) {
   const group = make("div", `room tone-${room.id}`, world);
   const depth = room.z1 - room.z0;
   const midZ = (room.z0 + room.z1) / 2;
-  const lift = index % 2 === 0 ? 0 : 3;
   addPlane(group, `floor ${room.floor}`, {
     x: 0,
-    y: FLOOR + lift,
+    y: FLOOR,
     z: midZ,
     w: X1 - X0,
-    h: depth + 28,
+    h: depth,
     rx: FLOOR_RX,
   });
   addPlane(group, "ceiling", {
     x: 0,
-    y: CEIL - lift,
+    y: CEIL,
     z: midZ,
     w: X1 - X0,
-    h: depth + 28,
+    h: depth,
     rx: FLOOR_RX,
   });
   if (room.z0 === 0) {
@@ -663,21 +610,27 @@ function syncRoom(force = false) {
 }
 
 let shownPose = "";
+let mapSize = null;
+function placeYou(yaw) {
+  const you = $("#m-you");
+  if (!you) return;
+  if (!mapSize || !mapSize.w) {
+    const rect = mapStage.getBoundingClientRect();
+    mapSize = { w: rect.width, h: rect.height };
+  }
+  if (!mapSize.w || !mapSize.h) return;
+  const u = (cam.x - X0) / (X1 - X0);
+  const v = 1 - cam.z / rooms.at(-1).z1;
+  you.style.transform = `translate3d(${u * mapSize.w - 5}px, ${v * mapSize.h - 4}px, 0) rotate(${yaw}deg)`;
+}
+
 function render() {
   const snap = (value) => Math.round(value * 10) / 10;
   const pose = `${snap(cam.x)}|${snap(cam.z)}|${snap(cam.yaw)}|${snap(cam.pitch)}`;
   if (pose !== shownPose) {
     shownPose = pose;
     world.style.transform = `translateZ(${fov}px) rotateX(${snap(-cam.pitch)}deg) rotateY(${snap(180 - cam.yaw)}deg) translate3d(${snap(-cam.x)}px, ${-EYE}px, ${snap(-cam.z)}px)`;
-    const you = $("#m-you");
-    if (you) {
-      const zMax = rooms.at(-1).z1;
-      const u = (cam.x - X0) / (X1 - X0);
-      const v = 1 - cam.z / zMax;
-      you.style.left = `${u * 100}%`;
-      you.style.top = `${v * 100}%`;
-      you.style.transform = `translate(-50%, -50%) rotate(${snap(cam.yaw)}deg)`;
-    }
+    placeYou(snap(cam.yaw));
   }
   syncRoom();
 }

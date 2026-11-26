@@ -319,14 +319,7 @@ body.dragging { cursor: grabbing; }
   text-transform: uppercase;
 }
 
-.canvas .tooth, .panel-face .tooth {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.16;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-}
+.canvas .tooth, .panel-face .tooth { display: none; }
 
 .panel-face {
   padding: 36px 32px;
@@ -631,13 +624,13 @@ body.dragging { cursor: grabbing; }
 
 .m-you {
   position: absolute;
+  left: 0;
+  top: 0;
   width: 0;
   height: 0;
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
   border-bottom: 11px solid #0d2c66;
-  margin-left: -5px;
-  margin-top: -4px;
   pointer-events: none;
   z-index: 1;
 }
