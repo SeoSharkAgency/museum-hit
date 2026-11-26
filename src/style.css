@@ -46,8 +46,6 @@ body.dragging { cursor: grabbing; }
 #stage {
   position: absolute;
   inset: 0;
-  transform-style: preserve-3d;
-  -webkit-transform-style: preserve-3d;
   perspective-origin: 50% 46%;
   -webkit-perspective-origin: 50% 46%;
 }
@@ -803,6 +801,17 @@ body.dragging { cursor: grabbing; }
   #map-stage { height: 168px; }
   #room-label strong { font-size: 18px; }
   #sheet { left: 12px; right: 12px; bottom: 168px; width: auto; }
+}
+
+html.phone:not(.playing) #viewport { display: none; }
+html.phone .bulb,
+html.phone .spot-bulb { box-shadow: none; }
+html.phone .canvas img,
+html.phone .canvas svg,
+html.phone .face {
+  transform: none;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
 }
 
 @media (prefers-reduced-motion: reduce) {

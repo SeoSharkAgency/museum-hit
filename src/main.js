@@ -28,6 +28,8 @@ const tones = {
 };
 
 const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const phone = matchMedia("(pointer: coarse)").matches || Math.min(window.screen.width, window.screen.height) <= 900;
+if (phone) document.documentElement.classList.add("phone");
 const dur = (seconds) => (calm ? Math.min(0.35, seconds) : seconds);
 
 const viewport = document.querySelector("#viewport");
@@ -54,6 +56,12 @@ let wheel = 0;
 const down = new Set();
 const obstacles = [];
 const walk = [];
+const blocked = new Set();
+function block(id, rect) {
+  if (blocked.has(id)) return;
+  blocked.add(id);
+  obstacles.push(rect);
+}
 
 const $= (sel) => document.querySelector(sel);
 
@@ -103,6 +111,7 @@ function paintWall(el, room) {
   el.style.setProperty("--plaster", mid);
   el.style.setProperty("--plaster-bot", bot);
   el.style.setProperty("--cornice", top);
+  if (phone) return;
   const ao = make("div", "ao", el);
   ao.setAttribute("aria-hidden", "true");
 }
@@ -205,7 +214,7 @@ function addBox(parent, { x, y, z, w, h, d, rx = 0, ry = 0, rz = 0, fill }) {
     [d, h, `rotateY(-90deg) translateZ(${w / 2}px)`, 0.86],
     [d, h, `rotateY(90deg) translateZ(${w / 2}px)`, 0.78],
     [w, d, `rotateX(90deg) translateZ(${h / 2}px)`, 1.12],
-    [w, d, `rotateX(-90deg) translateZ(${h / 2}px)`, 0.62],
+    ...(phone ? [] : [[w, d, `rotateX(-90deg) translateZ(${h / 2}px)`, 0.62]]),
   ];
   for (const [fw, fh, tf, light] of faces) {
     const face = make("div", "face", g);
@@ -268,7 +277,7 @@ function hangWork(wall, item, room) {
     button.innerHTML = `
       <div class="sconce"></div>
       <div class="frame"><div class="slip">
-        <div class="canvas${item.fit === "portrait" ? " portrait" : ""}" style="width:${item.w}px;height:${item.h}px">${item.image ? `<img src="${item.image}" alt="${item.title}">` : `${item.svg || ""}${item.fit === "portrait" ? `<span class="slot-mark">Місце для портрета</span>` : ""}`}</div>
+        <div class="canvas${item.fit === "portrait" ? " portrait" : ""}" style="width:${item.w}px;height:${item.h}px">${item.image ? `<img src="${item.image}" alt="${item.title}" decoding="async">` : `${item.svg || ""}${item.fit === "portrait" ? `<span class="slot-mark">Місце для портрета</span>` : ""}`}</div>
       </div></div>
       ${room.id === "fame" ? "" : caption(item)}`;
   }
@@ -277,12 +286,12 @@ function hangWork(wall, item, room) {
 
 function addBench(parent, x, z) {
   addBox(parent, { x, y: FLOOR - 46, z, w: 210, h: 16, d: 54, fill: "#0d2c66" });
-  obstacles.push({ x0: x - 120, x1: x + 120, z0: z - 48, z1: z + 48 });
+  block(`bench-${x}-${z}`, { x0: x - 120, x1: x + 120, z0: z - 48, z1: z + 48 });
 }
 
 function addPedestal(parent, x, z) {
   addBox(parent, { x, y: FLOOR - 50, z, w: 116, h: 100, d: 116, fill: "#e6e2d6" });
-  obstacles.push({ x0: x - 70, x1: x + 70, z0: z - 70, z1: z + 70 });
+  block(`pedestal-${x}-${z}`, { x0: x - 70, x1: x + 70, z0: z - 70, z1: z + 70 });
 }
 
 function addBall(parent, x, z) {
@@ -317,7 +326,7 @@ function addTrophyPedestal(parent, item) {
   addBox(parent, { x, y: FLOOR - 108, z, w: 140, h: 6, d: 140, fill: "#e6b84c" });
   addWallSpot(parent, x, z);
 
-  obstacles.push({ x0: x - 78, x1: x + 78, z0: z - 78, z1: z + 78 });
+  block(`trophy-${item.id}`, { x0: x - 78, x1: x + 78, z0: z - 78, z1: z + 78 });
   item.roomName = rooms.find((room) => room.id === item.room)?.name || "";
   item.stand = { x, z: z - 300, yaw: 0, pitch: -8 };
   const plate = addPlane(parent, "plaque", {
@@ -361,19 +370,19 @@ function addStand(parent, x, z) {
   const rig = addRig(parent, { x, y: FLOOR - 142, z });
   const ball = make("div", "sphere", rig);
   ball.setAttribute("aria-hidden", "true");
-  obstacles.push({ x0: x - 46, x1: x + 46, z0: z - 46, z1: z + 46 });
+  block(`stand-${x}-${z}`, { x0: x - 46, x1: x + 46, z0: z - 46, z1: z + 46 });
 }
 
 function addDesk(parent, x, z) {
   addBox(parent, { x, y: FLOOR - 36, z, w: 150, h: 70, d: 62, fill: "#0b2557" });
   addBox(parent, { x, y: FLOOR - 78, z, w: 190, h: 14, d: 84, fill: "#e6b84c" });
-  obstacles.push({ x0: x - 100, x1: x + 100, z0: z - 48, z1: z + 48 });
+  block(`desk-${x}-${z}`, { x0: x - 100, x1: x + 100, z0: z - 48, z1: z + 48 });
 }
 
 function addLights(parent, room) {
   const z0 = room.z0 + 220;
   const z1 = room.z1 - 220;
-  for (let z = z0; z <= z1; z += 420) {
+  for (let z = z0; z <= z1; z += phone ? 900 : 420) {
     const bulb = make("div", "bulb", parent);
     bulb.style.left = "0px";
     bulb.style.top = "0px";
@@ -419,15 +428,6 @@ function buildRoom(room) {
     hangWork(item.wall === "west" ? west : east, item, room);
   }
   addLights(group, room);
-
-  const solidSouth = room.z0 === 0;
-  const solidNorth = Boolean(room.window);
-  walk.push({
-    x0: X0 + INSET,
-    x1: X1 - INSET,
-    z0: room.z0 + (solidSouth ? INSET : 10),
-    z1: room.z1 - (solidNorth ? INSET : 10),
-  });
 }
 
 function buildMap() {
@@ -597,6 +597,7 @@ function retreat() {
 function syncRoom(force = false) {
   const room = rooms.find((item) => cam.z >= item.z0 && cam.z < item.z1) || rooms.at(-1);
   if (room.id === roomId && !force) return;
+  if (phone) syncMounted();
   roomId = room.id;
   document.querySelectorAll(".m-room").forEach((btn) => {
     if (btn.dataset.room === room.id) btn.setAttribute("aria-current", "true");
@@ -683,6 +684,7 @@ function showHints() {
 
 function enterMuseum() {
   if (mode !== "intro") return;
+  document.documentElement.classList.add("playing");
   gsap.to("#intro", { autoAlpha: 0, y: 12, duration: dur(0.45), ease: "power2.inOut", onComplete: () => $("#intro").remove() });
   introTween?.kill();
   tween?.kill();
@@ -713,31 +715,25 @@ function frame() {
   render();
 }
 
-function boot() {
-  rooms.forEach(buildRoom);
-  for (let i = 0; i < rooms.length - 1; i += 1) {
-    const seam = rooms[i].z1;
-    walk.push({ x0: -PASS, x1: PASS, z0: seam - 40, z1: seam + 40 });
+function furnish(room) {
+  const group = world.querySelector(`.tone-${room.id}`);
+  if (!group) return;
+  if (room.id === "vest") {
+    addStand(group, -520, 1080);
+    addDesk(group, 500, 980);
   }
-  const vest = world.querySelector(".tone-vest");
-  addStand(vest, -520, 1080);
-  addDesk(vest, 500, 980);
-  const origin = world.querySelector(".tone-origin");
-  addBench(origin, -560, 2460);
-  const gold = world.querySelector(".tone-gold");
-  addBench(gold, 560, 4500);
-  const fame = world.querySelector(".tone-fame");
-  addBench(fame, 540, 6060);
-  pedestals.forEach((item) => {
-    const room = world.querySelector(`.tone-${item.room}`);
-    addTrophyPedestal(room, item);
-  });
-  const arena = world.querySelector(".tone-arena");
-  sculptures.forEach((item) => addSculpture(arena, item));
-  addBench(arena, 480, 7280);
-  benchNote.roomName = rooms.find((room) => room.id === "arena").name;
+  if (room.id === "origin") addBench(group, -560, 2460);
+  if (room.id === "gold") addBench(group, 560, 4500);
+  if (room.id === "fame") addBench(group, 540, 6060);
+  for (const item of pedestals) {
+    if (item.room === room.id) addTrophyPedestal(group, item);
+  }
+  if (room.id !== "arena") return;
+  sculptures.forEach((item) => addSculpture(group, item));
+  addBench(group, 480, 7280);
+  benchNote.roomName = room.name;
   benchNote.stand = { x: 480, z: 7100, yaw: 0, pitch: 2 };
-  const benchHit = addPlane(arena, "plaque", {
+  const benchHit = addPlane(group, "plaque", {
     x: 480,
     y: FLOOR - 70,
     z: 7220,
@@ -748,15 +744,55 @@ function boot() {
   benchHit.innerHTML = "<b>Лавка</b><span>біля вікна</span>";
   benchHit.setAttribute("aria-label", benchNote.title);
   bind(benchHit, benchNote);
+}
 
-  addPlane(world, "runner", {
-    x: 0,
-    y: FLOOR - 16,
-    z: 4360,
-    w: 16,
-    h: 8400,
-    rx: FLOOR_RX,
-  });
+function mountRoom(room) {
+  if (world.querySelector(`.tone-${room.id}`)) return;
+  buildRoom(room);
+  furnish(room);
+}
+
+function syncMounted() {
+  const index = Math.max(0, rooms.findIndex((item) => cam.z >= item.z0 && cam.z < item.z1));
+  const keep = new Set([rooms[index]?.id]);
+  if (rooms[index - 1]) keep.add(rooms[index - 1].id);
+  if (rooms[index + 1]) keep.add(rooms[index + 1].id);
+  for (const room of rooms) {
+    if (keep.has(room.id)) mountRoom(room);
+  }
+  for (const room of rooms) {
+    if (!keep.has(room.id)) world.querySelector(`.tone-${room.id}`)?.remove();
+  }
+}
+
+function boot() {
+  for (const room of rooms) {
+    const solidSouth = room.z0 === 0;
+    const solidNorth = Boolean(room.window);
+    walk.push({
+      x0: X0 + INSET,
+      x1: X1 - INSET,
+      z0: room.z0 + (solidSouth ? INSET : 10),
+      z1: room.z1 - (solidNorth ? INSET : 10),
+    });
+  }
+  for (let i = 0; i < rooms.length - 1; i += 1) {
+    const seam = rooms[i].z1;
+    walk.push({ x0: -PASS, x1: PASS, z0: seam - 40, z1: seam + 40 });
+  }
+  if (phone) syncMounted();
+  else rooms.forEach((room) => mountRoom(room));
+
+  if (!phone) {
+    addPlane(world, "runner", {
+      x: 0,
+      y: FLOOR - 16,
+      z: 4360,
+      w: 16,
+      h: 8400,
+      rx: FLOOR_RX,
+    });
+  }
 
   buildMap();
   setFov();
@@ -769,13 +805,15 @@ function boot() {
     { y: 18, autoAlpha: 0 },
     { y: 0, autoAlpha: 1, stagger: 0.08, duration: dur(0.9), ease: "power3.out", delay: 0.15 },
   );
-  introTween = gsap.to(cam, {
-    z: cam.z + (calm ? 0 : 26),
-    duration: 3.4,
-    yoyo: true,
-    repeat: -1,
-    ease: "sine.inOut",
-  });
+  if (!phone) {
+    introTween = gsap.to(cam, {
+      z: cam.z + (calm ? 0 : 26),
+      duration: 3.4,
+      yoyo: true,
+      repeat: -1,
+      ease: "sine.inOut",
+    });
+  }
   gsap.ticker.add(frame);
 }
 
