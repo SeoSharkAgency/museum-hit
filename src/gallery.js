@@ -1,6 +1,6 @@
 const photo = (id, extra) => ({
   kind: "photo",
-  image: `/photos/${id}`,
+  image: `${import.meta.env.BASE_URL}photos/${id}`,
   ...extra,
 });
 
