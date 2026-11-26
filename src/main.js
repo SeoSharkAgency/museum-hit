@@ -810,14 +810,11 @@ function boot() {
   syncRoom(true);
   render();
   gsap.to("#fade", { autoAlpha: 0, duration: dur(1.15), ease: "power2.out" });
-  gsap.from("#intro .eyebrow, #intro h1, #intro .lead, #intro #enter, #intro .fine", {
-    y: 18,
-    autoAlpha: 0,
-    stagger: 0.08,
-    duration: dur(0.9),
-    ease: "power3.out",
-    delay: 0.15,
-  });
+  gsap.fromTo(
+    "#intro .eyebrow, #intro h1, #intro .lead, #enter, #intro .fine",
+    { y: 18, autoAlpha: 0 },
+    { y: 0, autoAlpha: 1, stagger: 0.08, duration: dur(0.9), ease: "power3.out", delay: 0.15 },
+  );
   introTween = gsap.to(cam, {
     z: cam.z + (calm ? 0 : 26),
     duration: 3.4,

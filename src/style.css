@@ -713,11 +713,15 @@ body.dragging { cursor: grabbing; }
   text-align: center;
   color: var(--cream);
   z-index: 22;
-  background: rgba(8, 29, 69, 0.78);
+  background: #0b2557;
   border: 1px solid rgba(230, 184, 76, 0.4);
   border-radius: 26px;
   box-shadow: 0 24px 60px rgba(4, 12, 32, 0.4);
-  backdrop-filter: blur(12px);
+}
+
+#intro > * {
+  position: relative;
+  z-index: 1;
 }
 
 #intro .eyebrow {
