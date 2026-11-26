@@ -16,6 +16,7 @@
 html, body {
   margin: 0;
   height: 100%;
+  height: 100dvh;
   overflow: hidden;
   background: var(--navy);
   color: var(--ink);
@@ -29,12 +30,23 @@ body.dragging { cursor: grabbing; }
 #viewport {
   position: fixed;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
   overflow: hidden;
-  perspective-origin: 50% 46%;
   background:
     radial-gradient(ellipse at 50% 30%, #123f8f 0%, #081d45 62%);
   cursor: grab;
   touch-action: none;
+}
+
+#stage {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  perspective-origin: 50% 46%;
+  -webkit-perspective-origin: 50% 46%;
 }
 
 #world {
@@ -44,13 +56,14 @@ body.dragging { cursor: grabbing; }
   width: 0;
   height: 0;
   transform-style: preserve-3d;
-  will-change: transform;
+  -webkit-transform-style: preserve-3d;
 }
 
 .room, .wall, .floor, .ceiling, .runner, .plane, .box, .face,
 .work, .plaque, .hero-type, .bulb, .track, .blob, .skylight, .spot-beam, .spot-pool, .spot-wash, .cup-mark {
   position: absolute;
   transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
 }
 
 .room {
@@ -63,6 +76,7 @@ body.dragging { cursor: grabbing; }
 
 .wall {
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .wall.plaster {
@@ -794,6 +808,7 @@ body.dragging { cursor: grabbing; }
 @media (pointer: coarse), (max-width: 820px) {
   .pad { display: block; }
   #hints { display: none; }
+  #grain { display: none; }
   #map { width: 104px; }
   #map-stage { height: 168px; }
   #room-label strong { font-size: 18px; }

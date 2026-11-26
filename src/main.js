@@ -31,6 +31,7 @@ const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const dur = (seconds) => (calm ? Math.min(0.35, seconds) : seconds);
 
 const viewport = document.querySelector("#viewport");
+const stage = document.querySelector("#stage");
 const world = document.querySelector("#world");
 const mapStage = document.querySelector("#map-stage");
 const roomLabel = document.querySelector("#room-label");
@@ -82,8 +83,11 @@ function dampAngle(current, target, dt, speed) {
 }
 
 function setFov() {
-  fov = Math.max(720, Math.min(1100, window.innerWidth * 0.7));
-  viewport.style.perspective = `${fov}px`;
+  const width = window.visualViewport?.width || window.innerWidth;
+  fov = Math.max(640, Math.min(1100, width * 0.7));
+  const perspective = `${fov}px`;
+  stage.style.perspective = perspective;
+  stage.style.webkitPerspective = perspective;
 }
 
 function addPlane(parent, className, { x, y, z, w, h, rx = 0, ry = 0 }) {
@@ -826,6 +830,7 @@ function boot() {
 }
 
 window.addEventListener("resize", setFov);
+window.visualViewport?.addEventListener("resize", setFov);
 $("#enter").addEventListener("click", enterMuseum);
 $("#sheet-back").addEventListener("click", retreat);
 
@@ -854,7 +859,11 @@ viewport.addEventListener("pointerdown", (event) => {
   dragX = event.clientX;
   dragY = event.clientY;
   document.body.classList.add("dragging");
-  viewport.setPointerCapture(event.pointerId);
+  try {
+    viewport.setPointerCapture(event.pointerId);
+  } catch {
+    /* iOS відпускає жест, якщо захват вказівника недоступний */
+  }
 });
 window.addEventListener("pointerup", () => {
   dragging = false;
